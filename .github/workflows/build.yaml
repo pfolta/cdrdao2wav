@@ -1,0 +1,72 @@
+name: "Build cdrdao2wav"
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    name: "Build ${{ matrix.goos }}/${{ matrix.goarch }}"
+    runs-on: "${{ matrix.runs-on }}"
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - goos: "linux"
+            goarch: "amd64"
+            runs-on: "ubuntu-latest"
+
+          - goos: "linux"
+            goarch: "arm64"
+            runs-on: "ubuntu-latest"
+
+          - goos: "windows"
+            goarch: "amd64"
+            runs-on: "windows-latest"
+
+          - goos: "windows"
+            goarch: "arm64"
+            runs-on: "windows-latest"
+
+          - goos: "darwin"
+            goarch: "amd64"
+            runs-on: "macos-latest"
+
+          - goos: "darwin"
+            goarch: "arm64"
+            runs-on: "macos-latest"
+
+    steps:
+      - name: "Check out source code"
+        uses: "actions/checkout@v6.0.0"
+
+      - name: "Set up Go"
+        uses: "actions/setup-go@v5"
+        with:
+          go-version: "1.26.4"
+
+      - name: "Download dependencies"
+        run: "go mod download"
+
+      - name: "Build cdrdao2wav"
+        env:
+          GOOS: "${{ matrix.goos }}"
+          GOARCH: "${{ matrix.goarch }}"
+          CGO_ENABLED: 0
+        run: |
+          OUTPUT="cdrdao2wav-${GOOS}-${GOARCH}"
+
+          if [ "$GOOS" = "windows" ]; then
+            OUTPUT="${OUTPUT}.exe"
+          fi
+
+          mkdir -p dist
+
+          go build -v -o "dist/${OUTPUT}" ./...
+
+      - name: "Upload build artifact"
+        uses: "actions/upload-artifact@v5.0.0"
+        with:
+          name: "cdrdao2wav-${{ matrix.goos }}-${{ matrix.goarch }}"
+          path: "dist/*"

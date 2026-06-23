@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -38,6 +39,9 @@ type Track struct {
 	LengthSector int64
 	BinFile      string
 }
+
+var tocFileRegex = regexp.MustCompile(`^FILE\s+"(.+)"\s+(.+)\s+(.+)$`)
+var msfRegex = regexp.MustCompile(`^(\d{2}):(0[0-9]|[1-5][0-9]):(0[0-9]|[1-6][0-9]|7[0-4])$`)
 
 func writeWavHeader(w io.Writer, dataSize uint32) error {
 	byteRate := uint32(SampleRate * Channels * BitsPerSample / 8)
@@ -76,8 +80,8 @@ func writeWavHeader(w io.Writer, dataSize uint32) error {
 	return binary.Write(w, binary.LittleEndian, &header)
 }
 
-func parseTocFile(path string) ([]Track, error) {
-	f, err := os.Open(path)
+func parseTocFile(tocFile string) ([]Track, error) {
+	f, err := os.Open(tocFile)
 	if err != nil {
 		return nil, err
 	}
@@ -109,20 +113,19 @@ func parseTocFile(path string) ([]Track, error) {
 		}
 
 		if strings.HasPrefix(line, TocFile) {
-			parts := strings.Split(line, " ")
-
-			if len(parts) < 4 {
+			file := tocFileRegex.FindStringSubmatch(line)
+			if file == nil {
 				return nil, fmt.Errorf("Invalid FILE line: %s", line)
 			}
 
-			current.BinFile = strings.Trim(parts[1], `"`)
+			current.BinFile = file[1]
 
-			start, err := msfToFrames(parts[2])
+			start, err := msfToFrames(file[2])
 			if err != nil {
 				return nil, err
 			}
 
-			length, err := msfToFrames(parts[3])
+			length, err := msfToFrames(file[3])
 			if err != nil {
 				return nil, err
 			}
@@ -131,8 +134,6 @@ func parseTocFile(path string) ([]Track, error) {
 			current.LengthSector = length
 		}
 	}
-
-	fmt.Printf("Parsed toc-file '%s'. Found %d tracks.\n", path, len(tracks))
 
 	return tracks, scanner.Err()
 }
@@ -143,72 +144,44 @@ func msfToFrames(offset string) (int64, error) {
 		return 0, nil
 	}
 
-	parts := strings.Split(offset, ":")
-	if len(parts) != 3 {
+	msf := msfRegex.FindStringSubmatch(offset)
+	if msf == nil {
 		return 0, fmt.Errorf("Invalid MSF: %s", offset)
 	}
 
-	minutes, err := strconv.Atoi(parts[0])
-	if err != nil {
-		return 0, err
-	}
-
-	seconds, err := strconv.Atoi(parts[1])
-	if err != nil {
-		return 0, err
-	}
-
-	frames, err := strconv.Atoi(parts[2])
-	if err != nil {
-		return 0, err
-	}
+	minutes, _ := strconv.Atoi(msf[1])
+	seconds, _ := strconv.Atoi(msf[2])
+	frames, _ := strconv.Atoi(msf[3])
 
 	return int64((minutes*60+seconds)*FramesPerSecond + frames), nil
 }
 
-func validateTracks(tracks []Track, binPath string) error {
-	st, err := os.Stat(binPath)
-	if err != nil {
-		return err
-	}
-
-	binSize := st.Size()
-
-	for _, t := range tracks {
-		if t.LengthSector <= 0 {
-			return fmt.Errorf("Track %d has invalid length", t.Number)
+func validateTracks(tracks []Track, binSize int64) error {
+	for _, track := range tracks {
+		if track.LengthSector <= 0 {
+			return fmt.Errorf("Track %d has invalid length", track.Number)
 		}
 
-		start := t.StartSector * SectorSize
-		end := start + (t.LengthSector * SectorSize)
+		start := track.StartSector * SectorSize
+		end := start + (track.LengthSector * SectorSize)
 
 		if end > binSize {
-			return fmt.Errorf("Track %d exceeds BIN size", t.Number)
+			return fmt.Errorf("Track %d exceeds BIN size", track.Number)
 		}
 	}
 
 	return nil
 }
 
-func extractTrack(bin *os.File, t Track, outPath string) error {
-	startByte := t.StartSector * SectorSize
-	sizeBytes := t.LengthSector * SectorSize
-
-	if _, err := bin.Seek(startByte, io.SeekStart); err != nil {
-		return err
-	}
-
-	out, err := os.Create(outPath)
-	if err != nil {
-		return err
-	}
-	defer out.Close()
+func extractTrack(binFileReader io.ReaderAt, track Track, wavFileWriter io.Writer) error {
+	startByte := track.StartSector * SectorSize
+	sizeBytes := track.LengthSector * SectorSize
 
 	if sizeBytes > 0xFFFFFFFF {
 		return fmt.Errorf("Track of size %d too large for WAV", sizeBytes)
 	}
 
-	if err := writeWavHeader(out, uint32(sizeBytes)); err != nil {
+	if err := writeWavHeader(wavFileWriter, uint32(sizeBytes)); err != nil {
 		return err
 	}
 
@@ -218,30 +191,31 @@ func extractTrack(bin *os.File, t Track, outPath string) error {
 	for remaining > 0 {
 		chunk := min(int64(len(buf)), remaining)
 
-		n, err := bin.Read(buf[:chunk])
-		if n > 0 {
-			swap16(buf[:n])
+		n, err := binFileReader.ReadAt(buf[:chunk], startByte)
+		if err != nil && err != io.EOF {
+			return err
+		}
 
-			if _, err := out.Write(buf[:n]); err != nil {
+		if n > 0 {
+			swapEndian16(buf[:n])
+
+			if _, err := wavFileWriter.Write(buf[:n]); err != nil {
 				return err
 			}
 
+			startByte += int64(n)
 			remaining -= int64(n)
 		}
 
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			return err
+		if err == io.EOF {
+			break
 		}
 	}
 
 	return nil
 }
 
-// Convert big-endian to little-endian
-func swap16(b []byte) {
+func swapEndian16(b []byte) {
 	n := len(b) &^ 1
 	for i := 0; i < n; i += 2 {
 		b[i], b[i+1] = b[i+1], b[i]
@@ -281,6 +255,7 @@ func main() {
 	tocFile := os.Args[1]
 	outDir := os.Args[2]
 
+	fmt.Printf("Parsing toc-file %q...\n", tocFile)
 	tracks, err := parseTocFile(tocFile)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "ERROR:", err)
@@ -292,22 +267,37 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Resolve bin-file path relative to toc-file path
+	tocDir := filepath.Dir(tocFile)
+
+	for i := range tracks {
+		if tracks[i].BinFile != "" {
+			tracks[i].BinFile = filepath.Join(tocDir, tracks[i].BinFile)
+		}
+	}
+
 	// Parse bin-file from first track
 	binFile := tracks[0].BinFile
 	if binFile == "" {
-		fmt.Fprintf(os.Stderr, "ERROR: No BIN file found in '%s'\n", tocFile)
+		fmt.Fprintf(os.Stderr, "ERROR: No bin-file found in '%s'\n", tocFile)
 		os.Exit(1)
 	}
 
 	// Ensure toc-file only references one bin-file
 	for _, track := range tracks {
 		if track.BinFile != binFile {
-			fmt.Fprintf(os.Stderr, "ERROR: Multiple BIN files are not supported\n")
+			fmt.Fprintf(os.Stderr, "ERROR: Multiple bin-files are not supported\n")
 			os.Exit(1)
 		}
 	}
 
-	if err := validateTracks(tracks, binFile); err != nil {
+	st, err := os.Stat(binFile)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
+		os.Exit(1)
+	}
+
+	if err := validateTracks(tracks, st.Size()); err != nil {
 		fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
 		os.Exit(1)
 	}
@@ -326,20 +316,27 @@ func main() {
 	}
 
 	for _, track := range tracks {
-		filename := fmt.Sprintf("%02d", track.Number)
+		wavFilename := fmt.Sprintf("%02d", track.Number)
 
 		// Append track title from CD-TEXT if available
 		if title := sanitizeFilename(track.Title); title != "" {
-			filename += " " + title
+			wavFilename += " " + title
 		}
 
-		filename += ".wav"
+		wavFilename += ".wav"
 
-		outPath := filepath.Join(outDir, filename)
+		wavFilePath := filepath.Join(outDir, wavFilename)
 
-		fmt.Printf("Extracting track %d: %s...\n", track.Number, outPath)
+		wavFile, err := os.Create(wavFilePath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "ERROR: Track %d: %v\n", track.Number, err)
+			os.Exit(1)
+		}
+		defer wavFile.Close()
 
-		if err := extractTrack(bin, track, outPath); err != nil {
+		fmt.Printf("Extracting track %d: %s...\n", track.Number, wavFilePath)
+
+		if err := extractTrack(bin, track, wavFile); err != nil {
 			fmt.Fprintf(os.Stderr, "ERROR: Track %d: %v\n", track.Number, err)
 			os.Exit(1)
 		}

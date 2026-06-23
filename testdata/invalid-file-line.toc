@@ -1,0 +1,9 @@
+CD_DA
+
+
+// Track 1
+TRACK AUDIO
+NO COPY
+NO PRE_EMPHASIS
+TWO_CHANNEL_AUDIO
+FILE "invalid-file-line.bin" 06:44:16

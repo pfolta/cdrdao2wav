@@ -15,6 +15,9 @@ else
 	CLEAN_CMD := rm -rf
 endif
 
+.PHONY: default
+default: release
+
 .PHONY: build
 build:
 	go build -ldflags "$(GO_LDFLAGS)" -o "$(BUILD_DIR)/bin/$(BINARY)" .

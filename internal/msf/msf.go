@@ -13,7 +13,7 @@ const (
 	MaxFrames  = 74
 
 	FramesPerSecond = 75
-	MaxTotalFrames  = MaxMinutes*60*FramesPerSecond + MaxSeconds*FramesPerSecond + MaxFrames
+	MaxLBA          = MaxMinutes*60*FramesPerSecond + MaxSeconds*FramesPerSecond + MaxFrames
 
 	SectorBytes = 2352
 )
@@ -23,25 +23,26 @@ var msfRegex = regexp.MustCompile(`^(\d{2}):(0[0-9]|[1-5][0-9]):(0[0-9]|[1-6][0-
 // ErrorInvalidMSF indicates an invalid [MSF] value.
 var ErrInvalidMSF = errors.New("invalid MSF")
 
-// MSF represents an audio CD timestamp in minutes:seconds:frames (MM:SS:FF).
+// MSF represents an audio CD timestamp in minutes:seconds:frames (MM:SS:FF)
+// stored as a Logical Block Address (LBA).
 type MSF struct {
-	totalFrames uint32
+	lba uint32
 }
 
-// New returns a [MSF] for the specified total number of frames.
-func New(frames uint32) (MSF, error) {
-	if frames > MaxTotalFrames {
-		err := fmt.Errorf("%w: %d > %d", ErrInvalidMSF, frames, MaxTotalFrames)
+// New returns a [MSF] for the specified Logical Block Address (LBA).
+func New(lba uint32) (MSF, error) {
+	if lba > MaxLBA {
+		err := fmt.Errorf("%w: %d > %d", ErrInvalidMSF, lba, MaxLBA)
 		return MSF{}, err
 	}
 
-	return MSF{frames}, nil
+	return MSF{lba}, nil
 }
 
-// Must is like [New] but panics if frames is invalid.
+// Must is like [New] but panics if the specified LBA is invalid.
 // It is intended for tests and trusted inputs.
-func Must(frames uint32) MSF {
-	msf, err := New(frames)
+func Must(lba uint32) MSF {
+	msf, err := New(lba)
 	if err != nil {
 		panic(err)
 	}
@@ -80,53 +81,42 @@ func MustParse(str string) MSF {
 	return msf
 }
 
-// TotalFrames returns the total number of frames of this [MSF].
-func (msf MSF) TotalFrames() uint32 {
-	return msf.totalFrames
+// LBA returns the Logical Block Address of this [MSF] (total number of frames).
+func (msf MSF) LBA() uint32 {
+	return msf.lba
 }
 
 // SectorBytes returns the total size of this [MSF] in bytes.
 func (msf MSF) SectorBytes() uint32 {
-	return msf.totalFrames * SectorBytes
+	return msf.lba * SectorBytes
 }
 
 // Add returns the sum of msf and other as a new [MSF] value.
 // It returns an error if the resulting value would exceed the maximum MSF.
 func (msf MSF) Add(other MSF) (MSF, error) {
-	if msf.totalFrames+other.totalFrames > MaxTotalFrames {
-		err := fmt.Errorf(
-			"%w: %d + %d > %d",
-			ErrInvalidMSF,
-			msf.totalFrames,
-			other.totalFrames,
-			MaxTotalFrames,
-		)
+	if msf.lba+other.lba > MaxLBA {
+		err := fmt.Errorf("%w: %d + %d > %d", ErrInvalidMSF, msf.lba, other.lba, MaxLBA)
 		return MSF{}, err
 	}
 
-	return MSF{msf.totalFrames + other.totalFrames}, nil
+	return MSF{msf.lba + other.lba}, nil
 }
 
 // Sub returns the difference between msf and other as a new [MSF] value.
 // It returns an error if the resulting value would be negative.
 func (msf MSF) Sub(other MSF) (MSF, error) {
-	if other.totalFrames > msf.totalFrames {
-		err := fmt.Errorf(
-			"%w: %d - %d < 0",
-			ErrInvalidMSF,
-			msf.totalFrames,
-			other.totalFrames,
-		)
+	if other.lba > msf.lba {
+		err := fmt.Errorf("%w: %d - %d < 0", ErrInvalidMSF, msf.lba, other.lba)
 		return MSF{}, err
 	}
 
-	return MSF{msf.totalFrames - other.totalFrames}, nil
+	return MSF{msf.lba - other.lba}, nil
 }
 
 // String returns a MM:SS:FF timestamp representation of this [MSF].
 func (msf MSF) String() string {
-	m := msf.totalFrames / FramesPerSecond / 60
-	s := msf.totalFrames / FramesPerSecond % 60
-	f := msf.totalFrames % FramesPerSecond
+	m := msf.lba / FramesPerSecond / 60
+	s := msf.lba / FramesPerSecond % 60
+	f := msf.lba % FramesPerSecond
 	return fmt.Sprintf("%02d:%02d:%02d", m, s, f)
 }

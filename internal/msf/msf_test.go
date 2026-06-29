@@ -19,7 +19,7 @@ func TestNew(t *testing.T) {
 		t.Run(fmt.Sprintf("New(%d)", test), func(t *testing.T) {
 			actual, err := New(test)
 			assert.NilError(t, err)
-			assert.Equal(t, actual.TotalFrames(), test)
+			assert.Equal(t, actual.LBA(), test)
 		})
 	}
 }
@@ -110,7 +110,7 @@ func TestMustParse(t *testing.T) {
 	})
 }
 
-func TestTotalFrames(t *testing.T) {
+func TestLBA(t *testing.T) {
 	tests := []struct {
 		in       MSF
 		expected uint32
@@ -122,8 +122,8 @@ func TestTotalFrames(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(fmt.Sprintf("MSF{%d}.TotalFrames()", test.in.TotalFrames()), func(t *testing.T) {
-			actual := test.in.TotalFrames()
+		t.Run(fmt.Sprintf("MSF{%d}.LBA()", test.in.LBA()), func(t *testing.T) {
+			actual := test.in.LBA()
 			assert.Assert(t, is.Equal(actual, test.expected))
 		})
 	}
@@ -141,7 +141,7 @@ func TestSectorBytes(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(fmt.Sprintf("MSF{%d}.SectorBytes()", test.in.TotalFrames()), func(t *testing.T) {
+		t.Run(fmt.Sprintf("MSF{%d}.SectorBytes()", test.in.LBA()), func(t *testing.T) {
 			actual := test.in.SectorBytes()
 			assert.Assert(t, is.Equal(actual, test.expected))
 		})
@@ -162,7 +162,7 @@ func TestAdd(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(fmt.Sprintf("MSF{%d}.Add(MSF{%d})", test.a.TotalFrames(), test.b.TotalFrames()), func(t *testing.T) {
+		t.Run(fmt.Sprintf("MSF{%d}.Add(MSF{%d})", test.a.LBA(), test.b.LBA()), func(t *testing.T) {
 			actual, err := test.a.Add(test.b)
 			assert.NilError(t, err)
 			assert.Assert(t, is.Equal(actual, test.expected))
@@ -180,7 +180,7 @@ func TestAddErrors(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(fmt.Sprintf("MSF{%d}.Add(MSF{%d}) errors", test.a.TotalFrames(), test.b.TotalFrames()), func(t *testing.T) {
+		t.Run(fmt.Sprintf("MSF{%d}.Add(MSF{%d}) errors", test.a.LBA(), test.b.LBA()), func(t *testing.T) {
 			actual, err := test.a.Add(test.b)
 			assert.Assert(t, is.ErrorIs(err, ErrInvalidMSF))
 			assert.Assert(t, is.Equal(actual, MSF{}))
@@ -203,7 +203,7 @@ func TestSub(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(fmt.Sprintf("MSF{%d}.Sub(MSF{%d})", test.a.TotalFrames(), test.b.TotalFrames()), func(t *testing.T) {
+		t.Run(fmt.Sprintf("MSF{%d}.Sub(MSF{%d})", test.a.LBA(), test.b.LBA()), func(t *testing.T) {
 			actual, err := test.a.Sub(test.b)
 			assert.NilError(t, err)
 			assert.Assert(t, is.Equal(actual, test.expected))
@@ -221,7 +221,7 @@ func TestSubErrors(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(fmt.Sprintf("MSF{%d}.Sub(MSF{%d}) errors", test.a.TotalFrames(), test.b.TotalFrames()), func(t *testing.T) {
+		t.Run(fmt.Sprintf("MSF{%d}.Sub(MSF{%d}) errors", test.a.LBA(), test.b.LBA()), func(t *testing.T) {
 			actual, err := test.a.Sub(test.b)
 			assert.Assert(t, is.ErrorIs(err, ErrInvalidMSF))
 			assert.Assert(t, is.Equal(actual, MSF{}))
@@ -241,7 +241,7 @@ func TestString(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(fmt.Sprintf("MSF{%d}.String()", test.in.TotalFrames()), func(t *testing.T) {
+		t.Run(fmt.Sprintf("MSF{%d}.String()", test.in.LBA()), func(t *testing.T) {
 			actual := test.in.String()
 			assert.Assert(t, is.Equal(actual, test.expected))
 		})

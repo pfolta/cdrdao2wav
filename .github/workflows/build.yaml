@@ -6,7 +6,7 @@ on:
 
 jobs:
   build:
-    name: "Build ${{ matrix.platform }}"
+    name: "Build ${{ matrix.goos }}/${{ matrix.goarch }}"
     runs-on: "${{ matrix.runs-on }}"
 
     strategy:
@@ -15,38 +15,32 @@ jobs:
         include:
           - goos: "linux"
             goarch: "amd64"
-            platform: "linux/amd64"
-            output: "cdrdao2wav-linux-amd64"
+            artifact: "cdrdao2wav-linux-amd64"
             runs-on: "ubuntu-latest"
 
           - goos: "linux"
             goarch: "arm64"
-            platform: "linux/arm64"
-            output: "cdrdao2wav-linux-arm64"
+            artifact: "cdrdao2wav-linux-arm64"
             runs-on: "ubuntu-latest"
 
           - goos: "windows"
             goarch: "amd64"
-            platform: "windows/amd64"
-            output: "cdrdao2wav-windows-amd64.exe"
+            artifact: "cdrdao2wav-windows-amd64.exe"
             runs-on: "windows-latest"
 
           - goos: "windows"
             goarch: "arm64"
-            platform: "windows/arm64"
-            output: "cdrdao2wav-windows-arm64.exe"
+            artifact: "cdrdao2wav-windows-arm64.exe"
             runs-on: "windows-latest"
 
           - goos: "darwin"
             goarch: "arm64"
-            platform: "macos/arm64"
-            output: "cdrdao2wav-macos-arm64"
+            artifact: "cdrdao2wav-macos-arm64"
             runs-on: "macos-latest"
 
           - goos: "darwin"
             goarch: "amd64"
-            platform: "macos/amd64"
-            output: "cdrdao2wav-macos-amd64"
+            artifact: "cdrdao2wav-macos-amd64"
             runs-on: "macos-latest"
 
     steps:
@@ -62,17 +56,16 @@ jobs:
       - name: "Download dependencies"
         run: "go mod download"
 
-      - name: "Build cdrdao2wav"
+      - name: "Test and build cdrdao2wav for ${{ matrix.goos }}/${{ matrix.goarch }}"
         shell: "bash"
         env:
           GOOS: "${{ matrix.goos }}"
           GOARCH: "${{ matrix.goarch }}"
-          CGO_ENABLED: 0
         run: |
-          go build -v -o "${{ matrix.output }}" .
+          make release
 
       - name: "Upload build artifact"
         uses: "actions/upload-artifact@v7.0.1"
         with:
-          name: "${{ matrix.output }}"
-          path: "${{ matrix.output }}"
+          name: "${{ matrix.artifact }}"
+          path: "build/bin/cdrdao2wav${{ matrix.goos == 'windows' && '.exe' || '' }}"

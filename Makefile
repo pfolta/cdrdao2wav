@@ -51,5 +51,14 @@ release: lint test build
 test:
 	mkdir -p "$(BUILD_DIR)/tests"
 	mkdir -p "$(BUILD_DIR)/reports"
-	go test -v ./... -coverprofile="$(BUILD_DIR)/tests/coverage.out"
-	go tool cover -html="$(BUILD_DIR)/tests/coverage.out" -o "$(BUILD_DIR)/reports/coverage.html"
+
+	go test \
+		-race \
+		-covermode=atomic \
+		-coverprofile="$(BUILD_DIR)/tests/coverage.out" \
+		-v ./...
+
+	go tool \
+		cover \
+		-html="$(BUILD_DIR)/tests/coverage.out" \
+		-o "$(BUILD_DIR)/reports/coverage.html"

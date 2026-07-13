@@ -98,3 +98,25 @@ jobs:
         with:
           name: "cdrdao2wav-${{ matrix.goos }}-${{ matrix.goarch }}"
           path: "build/bin/cdrdao2wav${{ matrix.goos == 'windows' && '.exe' || '' }}"
+
+  publish-coverage-data:
+    name: "Publish coverage data to Codecov"
+    needs:
+      - "test"
+      - "build"
+    runs-on: "ubuntu-latest"
+
+    steps:
+      - name: "Check out source code"
+        uses: "actions/checkout@v7.0.0"
+
+      - name: "Download coverage data artifact"
+        uses: "actions/download-artifact@v8.0.1"
+        with:
+          name: "Coverage Data"
+          path: "coverage.txt"
+
+      - name: "Publish coverage data to Codecov"
+        uses: "codecov/codecov-action@v5.5.1"
+        with:
+          token: "${{ secrets.CODECOV_TOKEN }}"

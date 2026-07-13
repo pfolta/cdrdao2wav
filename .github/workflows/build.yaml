@@ -39,32 +39,26 @@ jobs:
         include:
           - goos: "linux"
             goarch: "amd64"
-            artifact: "cdrdao2wav-linux-amd64"
             runs-on: "ubuntu-latest"
 
           - goos: "linux"
             goarch: "arm64"
-            artifact: "cdrdao2wav-linux-arm64"
             runs-on: "ubuntu-latest"
 
           - goos: "windows"
             goarch: "amd64"
-            artifact: "cdrdao2wav-windows-amd64.exe"
             runs-on: "windows-latest"
 
           - goos: "windows"
             goarch: "arm64"
-            artifact: "cdrdao2wav-windows-arm64.exe"
             runs-on: "windows-latest"
 
           - goos: "darwin"
             goarch: "arm64"
-            artifact: "cdrdao2wav-macos-arm64"
             runs-on: "macos-latest"
 
           - goos: "darwin"
             goarch: "amd64"
-            artifact: "cdrdao2wav-macos-amd64"
             runs-on: "macos-latest"
 
     steps:
@@ -91,5 +85,5 @@ jobs:
       - name: "Upload build artifact"
         uses: "actions/upload-artifact@v7.0.1"
         with:
-          name: "${{ matrix.artifact }}"
+          name: "cdrdao2wav-${{ matrix.goos }}-${{ matrix.goarch }}"
           path: "build/bin/cdrdao2wav${{ matrix.goos == 'windows' && '.exe' || '' }}"

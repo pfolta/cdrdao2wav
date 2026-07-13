@@ -79,8 +79,7 @@ jobs:
         env:
           GOOS: "${{ matrix.goos }}"
           GOARCH: "${{ matrix.goarch }}"
-        run: |
-          make build
+        run: "make build"
 
       - name: "Upload build artifact"
         uses: "actions/upload-artifact@v7.0.1"

@@ -12,8 +12,8 @@ func printHeader() {
 		"%s version %s-%s-%s (%s) - %s\n",
 		"cdrdao2wav",
 		internal.Version,
-		runtime.GOARCH,
 		runtime.GOOS,
+		runtime.GOARCH,
 		internal.BuildDate,
 		"Copyright (C) Peter Folta",
 	)

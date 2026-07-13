@@ -5,6 +5,29 @@ on:
   pull_request:
 
 jobs:
+  test:
+    name: "Test"
+    runs-on: "ubuntu-latest"
+
+    steps:
+      - name: "Check out source code"
+        uses: "actions/checkout@v7.0.0"
+
+      - name: "Set up Go"
+        uses: "actions/setup-go@v6.4.0"
+        with:
+          go-version: "1.26.4"
+          cache: true
+
+      - name: "Download dependencies"
+        run: "go mod download"
+
+      - name: "Run `make lint`"
+        run: "make lint"
+
+      - name: "Run `make test`"
+        run: "make test"
+
   build:
     name: "Build ${{ matrix.goos }}/${{ matrix.goarch }}"
     runs-on: "${{ matrix.runs-on }}"
@@ -51,18 +74,18 @@ jobs:
         uses: "actions/setup-go@v6.4.0"
         with:
           go-version: "1.26.4"
-          cache: false
+          cache: true
 
       - name: "Download dependencies"
         run: "go mod download"
 
-      - name: "Test and build cdrdao2wav for ${{ matrix.goos }}/${{ matrix.goarch }}"
+      - name: "Build cdrdao2wav for ${{ matrix.goos }}/${{ matrix.goarch }}"
         shell: "bash"
         env:
           GOOS: "${{ matrix.goos }}"
           GOARCH: "${{ matrix.goarch }}"
         run: |
-          make release
+          make build
 
       - name: "Upload build artifact"
         uses: "actions/upload-artifact@v7.0.1"

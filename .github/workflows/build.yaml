@@ -28,6 +28,18 @@ jobs:
       - name: "Run `make test`"
         run: "make test"
 
+      - name: "Upload coverage data"
+        uses: "actions/upload-artifact@v7.0.1"
+        with:
+          name: "Coverage Data"
+          path: "build/tests/coverage.out"
+
+      - name: "Upload coverage report"
+        uses: "actions/upload-artifact@v7.0.1"
+        with:
+          name: "Coverage Report"
+          path: "build/reports/coverage.html"
+
   build:
     name: "Build ${{ matrix.goos }}/${{ matrix.goarch }}"
     needs: "test"

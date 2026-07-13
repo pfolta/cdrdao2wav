@@ -1,30 +1,44 @@
-VERSION := $(shell git describe --match "v[0-9]*" --dirty="-m" --always --tags || echo "dev")
+PKG := github.com/pfolta/cdrdao2wav
+
+# Build metadata injected into the binary via -ldflags.
 BUILD_DATE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+VERSION := $(shell git describe --match "v[0-9]*" --dirty="-m" --always --tags || echo "dev")
 
 BUILD_DIR := ./build
 
-GO_LDFLAGS := \
-	-X "main.Version=$(VERSION)" \
-	-X "main.BuildDate=$(BUILD_DATE)"
+# Use the requested target platform if provided.
+# Otherwise, default to the platform of the build host.
+GOOS ?= $(shell go env GOOS)
+GOARCH ?= $(shell go env GOARCH)
 
-ifeq ($(OS),Windows_NT)
+ifeq ($(GOOS),windows)
 	BINARY := cdrdao2wav.exe
-	CLEAN_CMD := rmdir /s /q
 else
 	BINARY := cdrdao2wav
-	CLEAN_CMD := rm -rf
 endif
+
+GO_LDFLAGS := \
+	-X "$(PKG)/internal.BuildDate=$(BUILD_DATE)" \
+	-X "$(PKG)/internal.Version=$(VERSION)"
 
 .PHONY: default
 default: release
 
 .PHONY: build
 build:
-	go build -ldflags "$(GO_LDFLAGS)" -o "$(BUILD_DIR)/bin/$(BINARY)" .
+	mkdir -p "$(BUILD_DIR)/bin"
+
+	CGO_ENABLED=0 \
+	GOOS="$(GOOS)" \
+	GOARCH="$(GOARCH)" \
+	go build \
+		-ldflags "$(GO_LDFLAGS)" \
+		-o "$(BUILD_DIR)/bin/$(BINARY)" \
+		./cmd
 
 .PHONY: clean
 clean:
-	$(CLEAN_CMD) $(BUILD_DIR)
+	rm -rf "$(BUILD_DIR)"
 
 .PHONY: lint
 lint:
@@ -35,7 +49,7 @@ release: lint test build
 
 .PHONY: test
 test:
-	mkdir -p $(BUILD_DIR)/tests
-	mkdir -p $(BUILD_DIR)/reports
-	go test -race -v ./... -coverprofile=$(BUILD_DIR)/tests/coverage.out
-	go tool cover -html=$(BUILD_DIR)/tests/coverage.out -o $(BUILD_DIR)/reports/coverage.html
+	mkdir -p "$(BUILD_DIR)/tests"
+	mkdir -p "$(BUILD_DIR)/reports"
+	go test -v ./... -coverprofile="$(BUILD_DIR)/tests/coverage.out"
+	go tool cover -html="$(BUILD_DIR)/tests/coverage.out" -o "$(BUILD_DIR)/reports/coverage.html"

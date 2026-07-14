@@ -1,4 +1,4 @@
-name: "Build cdrdao2wav"
+name: "Build cdrdao2audio"
 
 on:
   push:
@@ -86,7 +86,7 @@ jobs:
       - name: "Download dependencies"
         run: "go mod download"
 
-      - name: "Build cdrdao2wav for ${{ matrix.goos }}/${{ matrix.goarch }}"
+      - name: "Build cdrdao2audio for ${{ matrix.goos }}/${{ matrix.goarch }}"
         shell: "bash"
         env:
           GOOS: "${{ matrix.goos }}"
@@ -96,8 +96,8 @@ jobs:
       - name: "Upload build artifact"
         uses: "actions/upload-artifact@v7.0.1"
         with:
-          name: "cdrdao2wav-${{ matrix.goos }}-${{ matrix.goarch }}"
-          path: "build/bin/cdrdao2wav${{ matrix.goos == 'windows' && '.exe' || '' }}"
+          name: "cdrdao2audio-${{ matrix.goos }}-${{ matrix.goarch }}"
+          path: "build/bin/cdrdao2audio${{ matrix.goos == 'windows' && '.exe' || '' }}"
 
   publish-coverage-data:
     name: "Publish coverage data to Codecov"

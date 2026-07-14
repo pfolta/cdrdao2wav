@@ -1,4 +1,4 @@
-PKG := github.com/pfolta/cdrdao2wav
+PKG := github.com/pfolta/cdrdao2audio
 
 # Build metadata injected into the binary via -ldflags.
 BUILD_DATE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
@@ -12,9 +12,9 @@ GOOS ?= $(shell go env GOOS)
 GOARCH ?= $(shell go env GOARCH)
 
 ifeq ($(GOOS),windows)
-	BINARY := cdrdao2wav.exe
+	BINARY := cdrdao2audio.exe
 else
-	BINARY := cdrdao2wav
+	BINARY := cdrdao2audio
 endif
 
 GO_LDFLAGS := \

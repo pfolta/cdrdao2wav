@@ -1,4 +1,4 @@
-module github.com/pfolta/cdrdao2wav
+module github.com/pfolta/cdrdao2audio
 
 go 1.26.4
 

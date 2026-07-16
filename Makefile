@@ -18,8 +18,8 @@ else
 endif
 
 GO_LDFLAGS := \
-	-X "$(PKG)/internal.BuildDate=$(BUILD_DATE)" \
-	-X "$(PKG)/internal.Version=$(VERSION)"
+	-X "$(PKG).buildDate=$(BUILD_DATE)" \
+	-X "$(PKG).version=$(VERSION)"
 
 .PHONY: default
 default: release
@@ -34,7 +34,7 @@ build:
 	go build \
 		-ldflags "$(GO_LDFLAGS)" \
 		-o "$(BUILD_DIR)/bin/$(BINARY)" \
-		./cmd
+		./cmd/cdrdao2audio
 
 .PHONY: clean
 clean:

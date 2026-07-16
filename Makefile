@@ -40,6 +40,13 @@ build:
 clean:
 	rm -rf "$(BUILD_DIR)"
 
+.PHONY: install
+install:
+	CGO_ENABLED=0 \
+	go install \
+		-ldflags "$(GO_LDFLAGS)" \
+		./cmd/cdrdao2audio
+
 .PHONY: lint
 lint:
 	go vet ./...

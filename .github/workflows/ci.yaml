@@ -153,7 +153,7 @@ jobs:
           failure-threshold: "style"
 
   build-docker-image:
-    name: "Build Docker Image"
+    name: "Build Docker image"
     needs:
       - "version"
       - "lint-dockerfile"
@@ -170,6 +170,8 @@ jobs:
 
       - name: "Build Docker Image"
         uses: "docker/build-push-action@v7.3.0"
+        env:
+          DOCKER_BUILD_SUMMARY: false
         with:
           context: "."
           file: "Dockerfile"

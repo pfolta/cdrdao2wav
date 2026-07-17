@@ -42,6 +42,7 @@ jobs:
           path: "build/reports/coverage.html"
 
       - name: "Publish coverage data to Codecov"
+        if: "github.ref == 'refs/heads/master'"
         uses: "codecov/codecov-action@v5.5.1"
         with:
           token: "${{ secrets.CODECOV_TOKEN }}"
@@ -145,7 +146,7 @@ jobs:
         id: "version"
         shell: "bash"
         run: |
-          version=$(make version)
+          version="$(make version)"
           echo "version=${version#v}" >> "$GITHUB_OUTPUT"
 
       - name: "Set up Docker Buildx"

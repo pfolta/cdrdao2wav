@@ -154,6 +154,7 @@ jobs:
         uses: "docker/build-push-action@v7.3.0"
         with:
           context: "."
+          file: "Dockerfile"
           platforms: "linux/386,linux/amd64,linux/arm,linux/arm64"
           tags: |
             pfolta/cdrdao2audio:latest

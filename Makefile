@@ -70,3 +70,7 @@ test:
 		cover \
 		-html="$(BUILD_DIR)/tests/coverage.out" \
 		-o "$(BUILD_DIR)/reports/coverage.html"
+
+.PHONY: version
+version:
+	@echo "$(VERSION)"

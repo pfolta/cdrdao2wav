@@ -126,3 +126,18 @@ jobs:
         with:
           name: "cdrdao2audio-${{ matrix.goos }}-${{ matrix.goarch }}"
           path: "build/bin/cdrdao2audio${{ matrix.goos == 'windows' && '.exe' || '' }}"
+
+  lint-dockerfile:
+    name: "Lint Dockerfile"
+    needs: "lint-and-test"
+    runs-on: "ubuntu-latest"
+
+    steps:
+      - name: "Check out source code"
+        uses: "actions/checkout@v7.0.0"
+
+      - name: "Lint `Dockerfile` with Hadolint"
+        uses: "hadolint/hadolint-action@v3.3.0"
+        with:
+          dockerfile: "Dockerfile"
+          failure-threshold: "style"

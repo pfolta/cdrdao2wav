@@ -4,7 +4,7 @@ PKG := github.com/pfolta/cdrdao2audio
 BUILD_DATE := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 VERSION := $(shell git describe --match "v[0-9]*" --dirty="-m" --always --tags || echo "dev")
 
-BUILD_DIR := ./build
+BUILD_DIR ?= ./build
 
 # Use the requested target platform if provided.
 # Otherwise, default to the platform of the build host.

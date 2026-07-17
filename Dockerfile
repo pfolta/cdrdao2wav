@@ -38,6 +38,7 @@ RUN --mount=type=bind,target=.,readonly \
 
 FROM scratch AS runtime
 ARG BUILD_DIR
+LABEL Maintainer="a@b.com"
 WORKDIR /
 COPY --from=builder ${BUILD_DIR}/bin/cdrdao2audio /cdrdao2audio
 ENTRYPOINT ["/cdrdao2audio"]

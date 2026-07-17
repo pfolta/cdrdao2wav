@@ -50,6 +50,10 @@ jobs:
       matrix:
         include:
           - goos: "linux"
+            goarch: "386"
+            runs-on: "ubuntu-latest"
+
+          - goos: "linux"
             goarch: "amd64"
             runs-on: "ubuntu-latest"
 

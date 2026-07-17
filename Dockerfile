@@ -3,7 +3,7 @@
 ARG GO_VERSION=1.26.4
 ARG BUILD_DIR=/build
 
-FROM --platform=${BUILDPLATFORM} golang:${GO_VERSION} AS builder-base
+FROM --platform=${BUILDPLATFORM} golang:${GO_VERSION}-trixie AS builder-base
 WORKDIR /src
 
 FROM builder-base AS builder-deps

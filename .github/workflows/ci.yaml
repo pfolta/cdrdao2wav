@@ -166,6 +166,7 @@ jobs:
           fetch-depth: 0
 
       - name: "Log in to Docker Hub"
+        if: "github.ref == 'refs/heads/master'"
         uses: "docker/login-action@v4.4.0"
         with:
           username: "${{ secrets.DOCKER_USER }}"
@@ -183,6 +184,6 @@ jobs:
           file: "Dockerfile"
           platforms: "linux/386,linux/amd64,linux/arm,linux/arm64"
           tags: |
-            pfolta/cdrdao2audio:latest
             pfolta/cdrdao2audio:${{ needs.version.outputs.version }}
-          push: true
+            pfolta/cdrdao2audio:latest
+          push: "${{ github.ref == 'refs/heads/master' }}"

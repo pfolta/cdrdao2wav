@@ -39,6 +39,12 @@ jobs:
           go-version: "1.26.5"
           cache: true
 
+      - name: "Check license headers"
+        run: |
+          go install github.com/google/addlicense@v1.2.0
+          find . -name "*.go" -print0 \
+            | xargs -0 "$(go env GOPATH)/bin/addlicense" -check -f LICENSE
+
       - name: "Download dependencies"
         run: "go mod download"
 

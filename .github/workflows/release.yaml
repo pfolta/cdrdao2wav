@@ -53,9 +53,16 @@ jobs:
 
           for artifact in "${artifacts[@]}"; do
             directory="$(basename "$(dirname "$artifact")")"
-            filename="$(basename "$artifact")"
+            platform="${directory#cdrdao2audio-}"
+
+            if [[ "$artifact" == *.exe ]]; then
+              extension=".exe"
+            else
+              extension=""
+            fi
+
             mv "$artifact" \
-              "release/cdrdao2audio-${version}-${directory#cdrdao2audio-}${filename#cdrdao2audio-}"
+              "release/cdrdao2audio-${version}-${platform}${extension}"
           done
 
           find release -type d -empty -delete

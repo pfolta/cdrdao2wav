@@ -229,7 +229,7 @@ jobs:
           file: "Dockerfile"
           platforms: "linux/386,linux/amd64,linux/arm,linux/arm64"
           tags: |
-            ${{ inputs.docker-image-development-tag && 'pfolta/cdrdao2audio:development' }}
+            ${{ inputs.docker-image-development-tag && 'pfolta/cdrdao2audio:development' || '' }}
             ${{ inputs.docker-image-version-tag && format('pfolta/cdrdao2audio:{0}', needs.version.outputs.version) || '' }}
-            ${{ inputs.docker-image-latest-tag && 'pfolta/cdrdao2audio:latest' }}
+            ${{ inputs.docker-image-latest-tag && 'pfolta/cdrdao2audio:latest' || '' }}
           push: "${{ inputs.push-docker-image }}"

@@ -44,6 +44,10 @@ clean:
 deps:
 	go mod download
 
+.PHONY: fmt
+fmt:
+	gofmt -w .
+
 .PHONY: install
 install:
 	CGO_ENABLED=0 \

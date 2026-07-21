@@ -55,16 +55,6 @@ install:
 		-ldflags "$(GO_LDFLAGS)" \
 		./cmd/cdrdao2audio
 
-.PHONY: license-headers
-license-headers:
-	find . -name "*.go" -print0 \
-	  | xargs -0 go run github.com/google/addlicense@v1.2.0 -check -f LICENSE
-
-.PHONY: lint
-lint:
-	gofmt -d .
-	go vet ./...
-
 .PHONY: release
 release: validate test build
 
@@ -85,7 +75,14 @@ test:
 		-o "$(BUILD_DIR)/reports/coverage.html"
 
 .PHONY: validate
-validate: license-headers lint
+validate:
+	go mod tidy --diff
+
+	gofmt -d .
+	go vet ./...
+
+	find . -name "*.go" -print0 \
+	  | xargs -0 go run github.com/google/addlicense@v1.2.0 -check -f LICENSE
 
 .PHONY: version
 version:

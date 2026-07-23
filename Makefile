@@ -18,6 +18,8 @@ else
 endif
 
 GO_LDFLAGS := \
+	-s \
+	-w \
 	-X "$(PKG).buildDate=$(BUILD_DATE)" \
 	-X "$(PKG).version=$(VERSION)"
 

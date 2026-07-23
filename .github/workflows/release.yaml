@@ -115,4 +115,5 @@ jobs:
             --prerelease="${{ startsWith(github.ref_name, 'v0.') }}" \
             --verify-tag \
             --fail-on-no-commits \
+            --draft \
             release/*
